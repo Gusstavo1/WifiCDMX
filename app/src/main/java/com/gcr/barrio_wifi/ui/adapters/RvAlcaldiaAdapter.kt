@@ -18,13 +18,13 @@ class RvAlcaldiaAdapter(
         fun bind(item: RecordX) {
             itemView.tvAlcaldiaPolygon.text = item.nomgeo
             itemView.setOnClickListener {
-                itemClickListener.clickListener(item._id, item.geo_shape, item.nomgeo)
+                itemClickListener.clickListener(item)
             }
         }
     }
 
     interface ItemClickListener {
-        fun clickListener(id: Int, polygon: String, alcadia: String)
+        fun clickListener(item:RecordX)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {

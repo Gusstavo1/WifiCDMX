@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.gcr.barrio_wifi.models.Coordinates
 import com.gcr.barrio_wifi.models.ItemMarker
 import com.gcr.barrio_wifi.models.wifipoints.WifiPoint
+import com.gcr.barrio_wifi.utils.MarkerClusterRenderer
 import com.gcr.barrio_wifi.utils.OpenFile
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -48,7 +49,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-        selectJsonFile(alcaldia)
+        //selectJsonFile(alcaldia)
         createCoordinates(this, mMap)
         createPolygons(googleMap)
     }
@@ -60,61 +61,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     override fun onPolygonClick(polygon: Polygon) {
         Log.d(TAG, "onPolygonClick: ")
     }
-
-    private fun selectJsonFile(alcaldia: String) {
-        when (alcaldia) {
-            "Azcapotzalco" -> {
-                jsonFile = "azcapotzalco.json"
-            }
-            "lvaro Obregn" -> {
-                jsonFile = "alvaro_obregon.json"
-            }
-            "Benito Jurez" -> {
-                jsonFile = "benito_juarez.json"
-            }
-            "Coyoacn" -> {
-                jsonFile = "coyoacan.json"
-            }
-            "Cuauhtmoc" -> {
-                jsonFile = "cuauhtemoc.json"
-            }
-            "Cuajimalpa de Morelos" -> {
-                jsonFile = "cuajimalpa.json"
-            }
-            "Gustavo A. Madero" -> {
-                jsonFile = "gustavo_madero.json"
-            }
-            "Iztacalco" -> {
-                jsonFile = "iztacalco.json"
-            }
-            "Iztapalapa" -> {
-                jsonFile = "iztapalapa.json"
-            }
-            "La Magdalena Contreras" -> {
-                jsonFile = "magdalena_contreras.json"
-            }
-            "Miguel Hidalgo" -> {
-                jsonFile = "miguel_hidalgo.json"
-            }
-            "Milpa Alta" -> {
-                jsonFile = "milpa_alta.json"
-            }
-            "Tlalpan" -> {
-                jsonFile = "tlalpan.json"
-            }
-            "Tlhuac" -> {
-                jsonFile = "tlahuac.json"
-            }
-            "Venustiano Carranza" -> {
-                jsonFile = "venustian_carranza.json"
-            }
-            "Xochimilco" -> {
-                jsonFile = "xochimilco.json"
-            }
-
-        }
-    }
-
     // Convertidor
     private fun jsonToGson(fileName: String): WifiPoint {
         return Gson().fromJson(OpenFile.loadJson(this, fileName), WifiPoint::class.java)
@@ -127,14 +73,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         snippet: String
     ): ItemMarker {
         val marker = ItemMarker(latitud, longitud, title, snippet)
-        mMap.apply {
-            addMarker(
-                MarkerOptions()
-                    .position(marker.position)
-                    .title(marker.title)
-                    .snippet(marker.snippet)
-            )
-        }
         return marker
     }
 
@@ -154,7 +92,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         )
         area.tag = "BARRIO WIFI"
         area.isGeodesic = true
-        area.strokeColor = Color.rgb(41, 128, 185)
+        area.strokeColor = Color.rgb(185, 41, 56)
+        area.fillColor = Color.argb(50, 185, 41, 56)
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(points[points.size - 1], 12f))
 
         googleMap.setOnPolylineClickListener(this)
@@ -162,10 +101,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     }
 
     private fun createCoordinates(context: Context, googleMap: GoogleMap) {
-        clusterManager = ClusterManager(context, googleMap)
+        clusterManager = ClusterManager(this,googleMap)
+        clusterManager.renderer = MarkerClusterRenderer(context, googleMap, clusterManager)
         clusterManager.setAnimation(true)
         googleMap.setOnCameraIdleListener(clusterManager)
         googleMap.setOnMarkerClickListener(clusterManager)
+
         val listItemMarker = mutableListOf<ItemMarker>()
         // Crea los marcadores
         jsonToGson(jsonFile).forEachIndexed { index, item ->
@@ -187,6 +128,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             )
         }
         clusterManager.addItems(listItemMarker)
+        clusterManager.cluster()
     }
 }
 

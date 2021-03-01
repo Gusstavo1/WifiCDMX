@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.gcr.barrio_wifi.api.ApiHelper
 import com.gcr.barrio_wifi.api.RetrofitClient
+import com.gcr.barrio_wifi.models.alcaldia.RecordX
 import com.gcr.barrio_wifi.ui.MainViewModel
 import com.gcr.barrio_wifi.ui.adapters.RvAdapter
 import com.gcr.barrio_wifi.ui.adapters.RvAlcaldiaAdapter
@@ -27,7 +28,9 @@ class MainActivity : AppCompatActivity(),
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setUpViewModel()
-        setUpAlcaldiaObserver()
+        viewModel.getLocalData(this)
+        setUpObserverLocalData()
+        //setUpAlcaldiaObserver()
     }
 
     private fun setUpViewModel() {
@@ -38,6 +41,20 @@ class MainActivity : AppCompatActivity(),
         ).get(MainViewModel::class.java)
     }
 
+    private fun setUpObserverLocalData(){
+        viewModel.lista.observe(this, Observer {result->
+            rvAlcaldia.visibility = View.VISIBLE
+            rvAlcaldia.setHasFixedSize(true)
+            rvAlcaldia.layoutManager = LinearLayoutManager(this)
+            val sortAlcaldias = result.sortedBy {
+                it.nomgeo
+            }
+            val adapter = RvAlcaldiaAdapter(sortAlcaldias,this)
+            rvAlcaldia.adapter = adapter
+        })
+    }
+
+    /*
     private fun setUpAlcaldiaObserver() {
         viewModel.getAlcaldia().observe(this, Observer { result ->
             result.let { response ->
@@ -68,7 +85,7 @@ class MainActivity : AppCompatActivity(),
                 }
             }
         })
-    }
+    }*/
 
     /*private fun setUpObserver() {
         hideViews()
@@ -96,10 +113,11 @@ class MainActivity : AppCompatActivity(),
         })
     }*/
 
-    override fun clickListener(id: Int, polygon: String, alcadia: String) {
+    override fun clickListener(item:RecordX) {
         val intent = Intent(this, MapsActivity::class.java)
-        intent.putExtra("polygon", polygon)
-        intent.putExtra("alcaldia",alcadia)
+        intent.putExtra("polygon", item.geo_shape)
+        intent.putExtra("alcaldia",item.nomgeo)
+        intent.putExtra("json",item.json_file)
         startActivity(intent)
     }
 }

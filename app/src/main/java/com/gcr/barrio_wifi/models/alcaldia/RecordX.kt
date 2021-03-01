@@ -9,5 +9,6 @@ data class RecordX(
     val geo_shape: String,
     val id: Int,
     val municipio: Int,
-    val nomgeo: String
+    val nomgeo: String,
+    val json_file:String
 )
