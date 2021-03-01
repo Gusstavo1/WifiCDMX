@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">BiciMobileCDMX</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="alcaldia">Alcaldía</string>
+    <string name="colonia">Colonia</string>
+    <string name="estatus">Estatus</string>
+    <string name="nombre_de_red">Nombre de red</string>
+</resources>
