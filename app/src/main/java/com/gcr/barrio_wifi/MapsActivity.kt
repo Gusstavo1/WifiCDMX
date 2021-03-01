@@ -1,17 +1,21 @@
 package com.gcr.barrio_wifi
 
 import android.content.Context
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.gcr.barrio_wifi.models.Coordinates
+import com.gcr.barrio_wifi.models.ItemMarker
 import com.gcr.barrio_wifi.models.wifipoints.WifiPoint
+import com.gcr.barrio_wifi.utils.OpenFile
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.gson.Gson
+import com.google.maps.android.clustering.ClusterManager
 import java.io.InputStream
 import java.lang.Exception
 
@@ -20,12 +24,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     GoogleMap.OnPolylineClickListener,
     GoogleMap.OnPolygonClickListener {
 
-    private val COLOR_ORANGE_ARGB = -0xa80e9
-
     private lateinit var mMap: GoogleMap
     private lateinit var polygon: String
     private lateinit var jsonFile: String
     private lateinit var alcaldia: String
+    private lateinit var clusterManager: ClusterManager<ItemMarker>
+
     private val TAG = "MAP"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,7 +49,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         selectJsonFile(alcaldia)
-        createCoordinates()
+        createCoordinates(this, mMap)
         createPolygons(googleMap)
     }
 
@@ -68,50 +72,76 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             "Benito Jurez" -> {
                 jsonFile = "benito_juarez.json"
             }
+            "Coyoacn" -> {
+                jsonFile = "coyoacan.json"
+            }
+            "Cuauhtmoc" -> {
+                jsonFile = "cuauhtemoc.json"
+            }
+            "Cuajimalpa de Morelos" -> {
+                jsonFile = "cuajimalpa.json"
+            }
+            "Gustavo A. Madero" -> {
+                jsonFile = "gustavo_madero.json"
+            }
+            "Iztacalco" -> {
+                jsonFile = "iztacalco.json"
+            }
+            "Iztapalapa" -> {
+                jsonFile = "iztapalapa.json"
+            }
+            "La Magdalena Contreras" -> {
+                jsonFile = "magdalena_contreras.json"
+            }
+            "Miguel Hidalgo" -> {
+                jsonFile = "miguel_hidalgo.json"
+            }
+            "Milpa Alta" -> {
+                jsonFile = "milpa_alta.json"
+            }
+            "Tlalpan" -> {
+                jsonFile = "tlalpan.json"
+            }
+            "Tlhuac" -> {
+                jsonFile = "tlahuac.json"
+            }
+            "Venustiano Carranza" -> {
+                jsonFile = "venustian_carranza.json"
+            }
+            "Xochimilco" -> {
+                jsonFile = "xochimilco.json"
+            }
+
         }
     }
 
-    private fun loadJson(context: Context, fileName: String): String? {
-        var inputStream: InputStream? = null
-        val jsonString: String
-        try {
-            inputStream = context.assets.open(fileName)
-            val size = inputStream.available()
-            val buffer = ByteArray(size)
-            inputStream.read(buffer)
-            jsonString = String(buffer)
-            return jsonString
-        } catch (ex: Exception) {
-            ex.printStackTrace()
-        } finally {
-            inputStream?.close()
-        }
-        return null
-    }
-
-    // convierte el file json a Objeto
+    // Convertidor
     private fun jsonToGson(fileName: String): WifiPoint {
-        return Gson().fromJson(loadJson(this, fileName), WifiPoint::class.java)
+        return Gson().fromJson(OpenFile.loadJson(this, fileName), WifiPoint::class.java)
     }
 
     private fun createMarker(
-        lat: Double,
-        lng: Double,
+        latitud: Double,
+        longitud: Double,
         title: String,
-        googleMap: GoogleMap
-    ) {
-        googleMap.apply {
+        snippet: String
+    ): ItemMarker {
+        val marker = ItemMarker(latitud, longitud, title, snippet)
+        mMap.apply {
             addMarker(
                 MarkerOptions()
-                    .position(LatLng(lat, lng))
-                    .title(title)
+                    .position(marker.position)
+                    .title(marker.title)
+                    .snippet(marker.snippet)
             )
         }
+        return marker
     }
 
     private fun createPolygons(googleMap: GoogleMap) {
         val points = mutableListOf<LatLng>()
         val polygons = Gson().fromJson(polygon, Coordinates::class.java)
+
         polygons.coordinates.forEachIndexed { index, list ->
             list.forEachIndexed { index, coordinates ->
                 points.add(LatLng(coordinates[1], coordinates[0]))
@@ -124,16 +154,21 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         )
         area.tag = "BARRIO WIFI"
         area.isGeodesic = true
-        area.fillColor = COLOR_ORANGE_ARGB
-        area.strokeColor = COLOR_ORANGE_ARGB
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(points[points.size - 1], 15f))
+        area.strokeColor = Color.rgb(41, 128, 185)
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(points[points.size - 1], 12f))
 
         googleMap.setOnPolylineClickListener(this)
         googleMap.setOnPolygonClickListener(this)
     }
 
-    private fun createCoordinates() {
-        Log.d(TAG, "onCreate: ${jsonToGson(jsonFile).forEachIndexed { index, item ->
+    private fun createCoordinates(context: Context, googleMap: GoogleMap) {
+        clusterManager = ClusterManager(context, googleMap)
+        clusterManager.setAnimation(true)
+        googleMap.setOnCameraIdleListener(clusterManager)
+        googleMap.setOnMarkerClickListener(clusterManager)
+        val listItemMarker = mutableListOf<ItemMarker>()
+        // Crea los marcadores
+        jsonToGson(jsonFile).forEachIndexed { index, item ->
             val latString =
                 item.latitud.substring(0, 2) + "." + item.latitud.substring(2, item.latitud.length)
             val lngString = item.longitud.substring(0, 3) + "." + item.longitud.substring(
@@ -142,8 +177,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             )
             val latDouble = latString.toDouble()
             val lngDouble = lngString.toDouble()
-            createMarker(latDouble, lngDouble, item.estatus_conectividad, mMap)
-        }}")
+            listItemMarker.add(
+                createMarker(
+                    latDouble,
+                    lngDouble,
+                    item.estatus_conectividad,
+                    item.direccion
+                )
+            )
+        }
+        clusterManager.addItems(listItemMarker)
     }
 }
 

@@ -18,7 +18,7 @@ import com.gcr.barrio_wifi.utils.Status
 import com.gcr.barrio_wifi.utils.VMfactory
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity(), RvAdapter.ItemClickListener,
+class MainActivity : AppCompatActivity(),
     RvAlcaldiaAdapter.ItemClickListener {
     private lateinit var viewModel: MainViewModel
     private val TAG = "Main"
@@ -27,14 +27,7 @@ class MainActivity : AppCompatActivity(), RvAdapter.ItemClickListener,
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setUpViewModel()
-
-        btnWifiZones.setOnClickListener {
-            setUpObserver()
-        }
-
-        btnAlcaldias.setOnClickListener {
-            setUpAlcaldiaObserver()
-        }
+        setUpAlcaldiaObserver()
     }
 
     private fun setUpViewModel() {
@@ -46,12 +39,11 @@ class MainActivity : AppCompatActivity(), RvAdapter.ItemClickListener,
     }
 
     private fun setUpAlcaldiaObserver() {
-        hideViews()
         viewModel.getAlcaldia().observe(this, Observer { result ->
             result.let { response ->
                 when (response.status) {
                     Status.SUCCESS -> {
-                        Log.d(TAG, "Alcaldia Success: ")
+                        loading.visibility = View.GONE
                         rvAlcaldia.visibility = View.VISIBLE
                         rvAlcaldia.setHasFixedSize(true)
                         rvAlcaldia.layoutManager = LinearLayoutManager(this)
@@ -67,17 +59,18 @@ class MainActivity : AppCompatActivity(), RvAdapter.ItemClickListener,
                         rvAlcaldia.adapter = adapter
                     }
                     Status.LOADING -> {
-                        Log.d(TAG, "Alcaldia loading: ")
+                        loading.visibility = View.VISIBLE
                     }
                     Status.ERROR -> {
-                        Log.d(TAG, "Alcaldia Error: ")
+                        loading.visibility = View.GONE
+                        Toast.makeText(this,"Algo salio mal",Toast.LENGTH_LONG).show()
                     }
                 }
             }
         })
     }
 
-    private fun setUpObserver() {
+    /*private fun setUpObserver() {
         hideViews()
         viewModel.getData().observe(this, Observer { result ->
             result.let { response ->
@@ -101,21 +94,7 @@ class MainActivity : AppCompatActivity(), RvAdapter.ItemClickListener,
                 }
             }
         })
-    }
-
-    override fun clickListener(id: Int, polygon: String) {
-        val intent = Intent(this, MapsActivity::class.java)
-        intent.putExtra("polygon", polygon)
-        intent.putExtra("isWifiPoints","false")
-        startActivity(intent)
-    }
-
-    private fun hideViews(){
-        rvWifi.visibility = View.GONE
-        rvAlcaldia.visibility = View.GONE
-        btnWifiZones.visibility = View.GONE
-        btnAlcaldias.visibility = View.GONE
-    }
+    }*/
 
     override fun clickListener(id: Int, polygon: String, alcadia: String) {
         val intent = Intent(this, MapsActivity::class.java)

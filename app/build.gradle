@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "com.gcr.bicimobilecdmx"
-        minSdkVersion 20
+        minSdkVersion 21
         targetSdkVersion 30
         versionCode 1
         versionName "1.0"
@@ -50,6 +50,5 @@ dependencies {
     implementation "androidx.recyclerview:recyclerview:1.1.0"
 
     implementation 'com.afollestad.material-dialogs:core:3.3.0'
-
-
+    implementation "androidx.cardview:cardview:1.0.0"
 }
